@@ -1,0 +1,36 @@
+---
+- name: Configuração da VM MongoDB
+  hosts: mongo_standalone
+  become: yes
+  roles:
+    - role: "community.mongodb.mongodb_repository"
+      mongodb_version: "4.2"
+    - { role: community.mongodb.mongodb_mongod, replicaset: false, sharding: false }
+        
+
+- name: Configuração da VM de Aplicação
+  hosts: app
+  become: yes
+  tasks:
+    - name: Instalar o Python 3
+      apt:
+        name: python3
+        state: present
+
+    - name: Criar o usuário senac
+      user:
+        name: senac
+        password: "{{ 'aluno' | password_hash('sha512') }}"
+        state: present
+
+    - name: Criar o diretório /app/data
+      file:
+        path: /app/data
+        state: directory
+
+    - name: Dar permissões ao usuário senac para /app/data
+      file:
+        path: /app/data
+        owner: senac
+        group: senac
+        recurse: yes
